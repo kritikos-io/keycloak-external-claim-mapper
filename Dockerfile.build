@@ -4,7 +4,7 @@ WORKDIR /build
 
 # ── Layer 1: resolve ALL dependencies + plugins (cached until pom.xml changes)
 COPY pom.xml .
-ARG KEYCLOAK_VERSION=25.0.1
+ARG KEYCLOAK_VERSION=26.0.8
 RUN mvn dependency:resolve dependency:resolve-plugins \
         -Dkeycloak.version=${KEYCLOAK_VERSION} -B -q
 

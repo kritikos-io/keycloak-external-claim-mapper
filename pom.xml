@@ -14,12 +14,26 @@
         A custom Keycloak Protocol Mapper that enriches token claims
         with values fetched from an external API.
     </description>
+    <url>https://github.com/kritikos-io/keycloak-external-claim-mapper</url>
+
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/kritikos-io/keycloak-external-claim-mapper</url>
+        <connection>scm:git:git://github.com/kritikos-io/keycloak-external-claim-mapper.git</connection>
+        <developerConnection>scm:git:git@github.com:kritikos-io/keycloak-external-claim-mapper.git</developerConnection>
+    </scm>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <keycloak.version>25.0.1</keycloak.version>
+        <keycloak.version>26.0.8</keycloak.version>
         <junit.version>5.10.2</junit.version>
         <mockito.version>5.11.0</mockito.version>
     </properties>
@@ -124,6 +138,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <excludes>
                                     <exclude>org.keycloak:*</exclude>

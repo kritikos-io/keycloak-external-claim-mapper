@@ -158,3 +158,26 @@ With JSONPath `$.privileges[*].name`, the resulting token claim:
 - **Change the JSONPath** – extract any shape of data from any API response (`$.roles`, `$.data.permissions`, `$.isAdmin`, etc.).
 - **Add caching** – wrap `ExternalClaimApiClient.fetchClaims()` with an in-memory or distributed cache.
 - **Internal token minting** – when using `client_credentials` with Keycloak as the IdP and no explicit token endpoint, the mapper mints tokens internally using Keycloak's signing keys (avoids HTTP self-call deadlock). The minted token includes `jti`, `preferred_username`, `iss`, `sub`, `aud`, `azp`, and a 60-second lifetime.
+
+## Compatibility
+
+| Keycloak | Java | Status |
+|---|---|---|
+| 22.x | 17 | Tested in CI |
+| 23.x | 17 | Tested in CI |
+| 24.x | 17 | Tested in CI |
+| 25.x | 17 | Tested |
+| 26.x | 17 | **Primary build target** |
+
+The mapper uses the stable **ProtocolMapper SPI** (`keycloak-server-spi` / `keycloak-server-spi-private`), which has remained binary-compatible across Keycloak 22–26. A single JAR works across the entire range — no version-specific builds needed.
+
+> **Note:** Keycloak 22 was the first Quarkus-only release with Jakarta EE. Older WildFly-based versions (< 22) are not supported.
+
+To build against a specific Keycloak version:
+```bash
+mvn clean package -Dkeycloak.version=26.0.8
+```
+
+## License
+
+Apache License 2.0
