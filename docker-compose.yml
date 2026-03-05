@@ -8,20 +8,20 @@ services:
       context: .
       dockerfile: Dockerfile.build
       args:
-        KEYCLOAK_VERSION: ${KEYCLOAK_VERSION:-25.0.1}
+        KEYCLOAK_VERSION: ${KEYCLOAK_VERSION:-26.0.8}
     volumes:
       # Copy the built JAR out of the container into ./target on the host
       - ./target:/output
-    entrypoint: /bin/sh
     command:
       - -c
       - |
         mkdir -p /output
-        cp /build/target/keycloak-external-claim-mapper.jar /output/
+        cp -f /build/target/keycloak-external-claim-mapper.jar /output/
         echo "Build complete — JAR copied to ./target/"
+    entrypoint: /bin/sh
 
   keycloak:
-    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-25.0.1}
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.0.8}
     depends_on:
       build:
         condition: service_completed_successfully
