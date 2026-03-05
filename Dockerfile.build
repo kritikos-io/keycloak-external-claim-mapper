@@ -1,0 +1,13 @@
+FROM maven:3.9-eclipse-temurin-17 AS builder
+
+WORKDIR /build
+
+# ── Layer 1: resolve ALL dependencies + plugins (cached until pom.xml changes)
+COPY pom.xml .
+ARG KEYCLOAK_VERSION=25.0.1
+RUN mvn dependency:resolve dependency:resolve-plugins \
+        -Dkeycloak.version=${KEYCLOAK_VERSION} -B -q
+
+# ── Layer 2: compile & package (re-runs only when source changes) ───
+COPY src/ src/
+RUN mvn package -DskipTests -Dkeycloak.version=${KEYCLOAK_VERSION} -B -q

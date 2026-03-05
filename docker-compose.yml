@@ -1,0 +1,46 @@
+# docker compose up  (builds automatically if needed)
+# docker compose up --build  (force rebuild)
+# docker compose build build  (rebuild JAR only)
+
+services:
+  build:
+    build:
+      context: .
+      dockerfile: Dockerfile.build
+      args:
+        KEYCLOAK_VERSION: ${KEYCLOAK_VERSION:-25.0.1}
+    volumes:
+      # Copy the built JAR out of the container into ./target on the host
+      - ./target:/output
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        mkdir -p /output
+        cp /build/target/keycloak-external-claim-mapper.jar /output/
+        echo "Build complete — JAR copied to ./target/"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-25.0.1}
+    depends_on:
+      build:
+        condition: service_completed_successfully
+    ports:
+      - "8083:8080" # Keycloak UI / API
+      - "5005:5005" # Remote debug
+    volumes:
+      - ./target/keycloak-external-claim-mapper.jar:/opt/keycloak/providers/keycloak-external-claim-mapper.jar:ro
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # Java remote debug on port 5005
+      JAVA_OPTS_APPEND: >-
+        -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    command:
+      - -c
+      - |
+        /opt/keycloak/bin/kc.sh build
+        /opt/keycloak/bin/kc.sh start-dev --log-level=INFO,io.kritikos.keycloak:DEBUG
+    entrypoint: /bin/sh
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
