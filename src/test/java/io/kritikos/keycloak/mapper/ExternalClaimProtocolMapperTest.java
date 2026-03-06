@@ -171,13 +171,64 @@ class ExternalClaimProtocolMapperTest {
   }
 
   @Test
-  @DisplayName("Mapper skips when base URL is blank")
-  void skipsWhenBaseUrlBlank() {
+  @DisplayName("Mapper skips when base URL is blank and Root URL fallback returns null")
+  void skipsWhenBaseUrlBlankAndRootUrlNull() {
     mappingModel.getConfig().put(ExternalClaimMapperConfig.CONFIG_API_BASE_URL, "");
 
     when(clientSessionCtx.getClientSession()).thenReturn(clientSession);
     when(clientSession.getClient()).thenReturn(clientModel);
     when(clientModel.getRootUrl()).thenReturn(null);
+
+    IDToken token = new IDToken();
+
+    mapper.setClaim(token, mappingModel, userSession, keycloakSession, clientSessionCtx);
+
+    verifyNoInteractions(apiClient);
+  }
+
+  @Test
+  @DisplayName("Mapper falls back to Home URL when configured")
+  void fallsBackToHomeUrl() {
+    mappingModel.getConfig().put(ExternalClaimMapperConfig.CONFIG_API_BASE_URL, "");
+    mappingModel.getConfig().put(ExternalClaimMapperConfig.CONFIG_URL_FALLBACK,
+        ExternalClaimMapperConfig.FALLBACK_HOME_URL);
+
+    when(userSession.getUser()).thenReturn(userModel);
+    when(userModel.getId()).thenReturn("user-home");
+    when(userModel.getUsername()).thenReturn("homeuser");
+    when(userModel.getEmail()).thenReturn("home@example.com");
+    when(clientSessionCtx.getClientSession()).thenReturn(clientSession);
+    when(clientSession.getClient()).thenReturn(clientModel);
+    when(clientModel.getBaseUrl()).thenReturn("https://home.example.com");
+    when(clientModel.getClientId()).thenReturn("home-app");
+
+    when(apiClient.fetchClaims(
+        eq("https://home.example.com"),
+        anyString(), anyString(), anyString(), any(), anyString(),
+        any(), any(), any(), any(), any(), any(),
+        anyInt(), anyInt(), anyBoolean()))
+        .thenReturn(null);
+
+    IDToken token = new IDToken();
+    mapper.setClaim(token, mappingModel, userSession, keycloakSession, clientSessionCtx);
+
+    verify(apiClient).fetchClaims(
+        eq("https://home.example.com"),
+        anyString(), anyString(), anyString(), any(), anyString(),
+        any(), any(), any(), any(), any(), any(),
+        anyInt(), anyInt(), anyBoolean());
+  }
+
+  @Test
+  @DisplayName("Mapper skips when Home URL fallback is blank")
+  void skipsWhenHomeUrlFallbackBlank() {
+    mappingModel.getConfig().put(ExternalClaimMapperConfig.CONFIG_API_BASE_URL, "");
+    mappingModel.getConfig().put(ExternalClaimMapperConfig.CONFIG_URL_FALLBACK,
+        ExternalClaimMapperConfig.FALLBACK_HOME_URL);
+
+    when(clientSessionCtx.getClientSession()).thenReturn(clientSession);
+    when(clientSession.getClient()).thenReturn(clientModel);
+    when(clientModel.getBaseUrl()).thenReturn(null);
 
     IDToken token = new IDToken();
 

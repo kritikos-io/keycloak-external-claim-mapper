@@ -81,7 +81,8 @@ Restart Keycloak. The mapper will appear as **"External Claim Mapper"** in the A
 
 | Property | Description | Default | Fallback |
 |---|---|---|---|
-| **API Base URL** | Root URL of the external service | _(empty)_ | Client's **Root URL** in Keycloak. If both are blank the mapper is skipped. |
+| **API Base URL** | Root URL of the external service | _(empty)_ | Falls back to the client URL selected in **URL Fallback**. If both are blank the mapper is skipped. |
+| **URL Fallback** | Which client URL to use when API Base URL is blank: `root_url` (Root URL) or `home_url` (Home URL). | `root_url` | - |
 | **API Path Template** | Path appended to the base URL. Supports `{userId}`, `{username}`, `{email}`, and `{clientId}` placeholders. | `/privileges?userId={userId}&clientId={clientId}` | - |
 | **Token Claim Name** | Name of the claim written into the token | `app_privileges` | - |
 | **Response JSONPath** | JSONPath expression applied to the API response to extract the claim value | `$.privileges[*].name` | - |
@@ -105,10 +106,13 @@ Restart Keycloak. The mapper will appear as **"External Claim Mapper"** in the A
 flowchart TD
     A["Mapper config 'API Base URL'"] --> B{Provided?}
     B -- YES --> C[Use it]
-    B -- NO --> D["Client Root URL (Keycloak client settings)"]
-    D --> E{Provided?}
-    E -- YES --> F[Use it]
-    E -- NO --> G["SKIP mapper (log warning, no claim set)"]
+    B -- NO --> D{URL Fallback setting}
+    D -- "root_url (default)" --> E["Client Root URL"]
+    D -- "home_url" --> F["Client Home URL"]
+    E --> G{Provided?}
+    F --> G
+    G -- YES --> H[Use it]
+    G -- NO --> I["SKIP mapper (log warning, no claim set)"]
 ```
 
 ### Token Endpoint & Authentication
@@ -169,15 +173,9 @@ With JSONPath `$.privileges[*].name`, the resulting token claim:
 | 25.x | 17 | Tested |
 | 26.x | 17 | **Primary build target** |
 
-The mapper uses the stable **ProtocolMapper SPI** (`keycloak-server-spi` / `keycloak-server-spi-private`), which has remained binary-compatible across Keycloak 22–26. A single JAR works across the entire range — no version-specific builds needed.
-
 > **Note:** Keycloak 22 was the first Quarkus-only release with Jakarta EE. Older WildFly-based versions (< 22) are not supported.
 
 To build against a specific Keycloak version:
 ```bash
 mvn clean package -Dkeycloak.version=26.0.8
 ```
-
-## License
-
-Apache License 2.0

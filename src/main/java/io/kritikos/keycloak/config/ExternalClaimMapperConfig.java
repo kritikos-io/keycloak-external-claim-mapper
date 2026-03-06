@@ -1,5 +1,9 @@
 package io.kritikos.keycloak.config;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 /**
  * Centralized configuration constants for the External Claim Mapper.
  * <p>
@@ -9,6 +13,24 @@ package io.kritikos.keycloak.config;
 public final class ExternalClaimMapperConfig {
 
   private ExternalClaimMapperConfig() {
+  }
+
+  /** Mapper version read from the build-time filtered {@code version.properties}. */
+  public static final String VERSION;
+
+  static {
+    String v = "unknown";
+    try (InputStream is = ExternalClaimMapperConfig.class
+        .getClassLoader().getResourceAsStream("version.properties")) {
+      if (is != null) {
+        Properties props = new Properties();
+        props.load(is);
+        v = props.getProperty("mapper.version", "unknown");
+      }
+    } catch (IOException ignored) {
+      // keep default
+    }
+    VERSION = v;
   }
 
   /** Unique SPI provider identifier for the mapper. */
@@ -22,7 +44,7 @@ public final class ExternalClaimMapperConfig {
 
   /** Short help text shown in the Admin Console. */
   public static final String HELP_TEXT = "Fetches claims from an external API "
-      + "and adds them to the token.";
+      + "and adds them to the token. (v" + VERSION + ")";
 
   /** Base URL of the external API (e.g. https://api.example.com). */
   public static final String CONFIG_API_BASE_URL = "external.api.base_url";
@@ -128,4 +150,19 @@ public final class ExternalClaimMapperConfig {
 
   /** Default header name for the API key authentication mode. */
   public static final String DEFAULT_API_KEY_HEADER = "X-API-Key";
+
+  /**
+   * Determines which client URL to use as fallback when no explicit
+   * API Base URL is configured: {@code root_url} or {@code home_url}.
+   */
+  public static final String CONFIG_URL_FALLBACK = "external.api.url_fallback";
+
+  /** Fallback to the client's Root URL (default). */
+  public static final String FALLBACK_ROOT_URL = "root_url";
+
+  /** Fallback to the client's Home URL. */
+  public static final String FALLBACK_HOME_URL = "home_url";
+
+  /** Default URL fallback strategy. */
+  public static final String DEFAULT_URL_FALLBACK = FALLBACK_ROOT_URL;
 }
