@@ -65,10 +65,23 @@ public class ExternalClaimProtocolMapper extends AbstractOIDCProtocolMapper
     apiUrl.setName(ExternalClaimMapperConfig.CONFIG_API_BASE_URL);
     apiUrl.setLabel("API Base URL");
     apiUrl.setHelpText("The base URL of the external API (e.g. https://api.example.com). "
-        + "When blank, falls back to the client's Root URL.");
+        + "When blank, falls back to the client URL selected below.");
     apiUrl.setType(ProviderConfigProperty.STRING_TYPE);
     apiUrl.setDefaultValue("");
     CONFIG_PROPERTIES.add(apiUrl);
+
+    ProviderConfigProperty urlFallback = new ProviderConfigProperty();
+    urlFallback.setName(ExternalClaimMapperConfig.CONFIG_URL_FALLBACK);
+    urlFallback.setLabel("URL Fallback Source");
+    urlFallback.setHelpText(
+        "Which client URL field to use when the API Base URL is left blank. "
+            + "'root_url' uses the client's Root URL; 'home_url' uses the Home URL.");
+    urlFallback.setType(ProviderConfigProperty.LIST_TYPE);
+    urlFallback.setDefaultValue(ExternalClaimMapperConfig.DEFAULT_URL_FALLBACK);
+    urlFallback.setOptions(List.of(
+        ExternalClaimMapperConfig.URL_FALLBACK_ROOT,
+        ExternalClaimMapperConfig.URL_FALLBACK_HOME));
+    CONFIG_PROPERTIES.add(urlFallback);
 
     ProviderConfigProperty pathTemplate = new ProviderConfigProperty();
     pathTemplate.setName(ExternalClaimMapperConfig.CONFIG_API_PATH_TEMPLATE);
@@ -254,13 +267,18 @@ public class ExternalClaimProtocolMapper extends AbstractOIDCProtocolMapper
     String baseUrl = config.get(ExternalClaimMapperConfig.CONFIG_API_BASE_URL);
 
     if (baseUrl == null || baseUrl.isBlank()) {
-      String rootUrl = clientSessionCtx.getClientSession()
-          .getClient().getRootUrl();
-      if (rootUrl != null && !rootUrl.isBlank()) {
-        baseUrl = rootUrl;
-        LOG.debugf("API Base URL not configured – falling back to client Root URL: %s", baseUrl);
+      String fallbackSource = config.getOrDefault(
+          ExternalClaimMapperConfig.CONFIG_URL_FALLBACK,
+          ExternalClaimMapperConfig.DEFAULT_URL_FALLBACK);
+      ClientModel client = clientSessionCtx.getClientSession().getClient();
+      String fallbackUrl = ExternalClaimMapperConfig.URL_FALLBACK_HOME.equals(fallbackSource)
+          ? client.getBaseUrl()
+          : client.getRootUrl();
+      if (fallbackUrl != null && !fallbackUrl.isBlank()) {
+        baseUrl = fallbackUrl;
+        LOG.debugf("API Base URL not configured – falling back to client %s: %s", fallbackSource, baseUrl);
       } else {
-        LOG.warn("External API base URL is not configured and client has no Root URL – skipping mapper.");
+        LOG.warnf("External API base URL is not configured and client has no %s – skipping mapper.", fallbackSource);
         return;
       }
     }

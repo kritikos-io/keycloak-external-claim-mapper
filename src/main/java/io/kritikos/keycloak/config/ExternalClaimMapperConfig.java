@@ -1,5 +1,11 @@
 package io.kritikos.keycloak.config;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+import org.jboss.logging.Logger;
+
 /**
  * Centralized configuration constants for the External Claim Mapper.
  * <p>
@@ -8,6 +14,27 @@ package io.kritikos.keycloak.config;
  */
 public final class ExternalClaimMapperConfig {
 
+  private static final Logger LOG = Logger.getLogger(ExternalClaimMapperConfig.class);
+
+  /** Mapper version loaded from Maven-filtered resource at build time. */
+  public static final String VERSION;
+
+  static {
+    String v = "unknown";
+    try (InputStream is = ExternalClaimMapperConfig.class
+        .getClassLoader()
+        .getResourceAsStream("mapper-version.properties")) {
+      if (is != null) {
+        Properties props = new Properties();
+        props.load(is);
+        v = props.getProperty("mapper.version", "unknown");
+      }
+    } catch (IOException e) {
+      LOG.warn("Could not read mapper-version.properties", e);
+    }
+    VERSION = v;
+  }
+
   private ExternalClaimMapperConfig() {
   }
 
@@ -15,7 +42,7 @@ public final class ExternalClaimMapperConfig {
   public static final String PROVIDER_ID = "external-claim-mapper";
 
   /** Human-readable name shown in the Keycloak Admin Console mapper type list. */
-  public static final String DISPLAY_TYPE = "External Claim Mapper";
+  public static final String DISPLAY_TYPE = "External Claim Mapper v" + VERSION;
 
   /** Admin Console category under which this mapper appears. */
   public static final String DISPLAY_CATEGORY = "Token mapper";
@@ -74,6 +101,21 @@ public final class ExternalClaimMapperConfig {
 
   /** OAuth2 client_secret for the client_credentials grant. */
   public static final String CONFIG_CC_CLIENT_SECRET = "external.api.client_secret";
+
+  /**
+   * Which client URL field to use as fallback when the API Base URL is blank.
+   * Allowed values: {@code root_url} or {@code home_url}.
+   */
+  public static final String CONFIG_URL_FALLBACK = "external.api.url_fallback";
+
+  /** Fallback option: use the client's Root URL. */
+  public static final String URL_FALLBACK_ROOT = "root_url";
+
+  /** Fallback option: use the client's Home URL. */
+  public static final String URL_FALLBACK_HOME = "home_url";
+
+  /** Default URL fallback source. */
+  public static final String DEFAULT_URL_FALLBACK = URL_FALLBACK_ROOT;
 
   /** HTTP connect timeout in milliseconds. */
   public static final String CONFIG_CONNECT_TIMEOUT = "external.api.connect_timeout_ms";

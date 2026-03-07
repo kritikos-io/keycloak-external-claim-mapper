@@ -8,7 +8,7 @@ services:
       context: .
       dockerfile: Dockerfile.build
       args:
-        KEYCLOAK_VERSION: ${KEYCLOAK_VERSION:-26.0.8}
+        KEYCLOAK_VERSION: ${KEYCLOAK_VERSION:-26.5}
     volumes:
       # Copy the built JAR out of the container into ./target on the host
       - ./target:/output
@@ -21,7 +21,7 @@ services:
     entrypoint: /bin/sh
 
   keycloak:
-    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.0.8}
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.5}
     depends_on:
       build:
         condition: service_completed_successfully
